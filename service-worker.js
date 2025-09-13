@@ -1,4 +1,4 @@
-const CACHE_NAME='cash-counter-v5';
+const CACHE_NAME='cash-counter-v6';
 const ASSETS=[
   './','./index.html','./service-worker.js','./manifest.webmanifest',
   './icons/icon-192.png','./icons/icon-512.png'
