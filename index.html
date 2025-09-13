@@ -8,49 +8,85 @@
   <meta name="theme-color" content="#0f172a">
   <style>
     :root{
-  --ink:#e5e7eb;
-  --muted:#94a3b8;
-  --brand:#0ea5e9;             /* accent blue */
-  --bg1:#0b1220;               /* deep navy */
-  --bg2:#0e1526;               /* deep navy */
-  --card:#0f172a;              /* card dark */
-}
+      --ink:#e5e7eb;
+      --muted:#94a3b8;
+      --brand:#0ea5e9;         /* accent blue */
+      --bg1:#0b1220;           /* deep navy */
+      --bg2:#0e1526;           /* deep navy */
+      --card:#0f172a;          /* card dark */
+    }
+    *{ box-sizing:border-box }
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin:0;
+      background: radial-gradient(1100px 700px at 15% -10%, var(--bg2) 0%, var(--bg1) 55%, #070b14 100%);
+      color:var(--ink);
+    }
+    .wrap{ max-width:900px; margin:18px auto; padding:0 14px 20px; }
+    .top{ display:flex; align-items:center; gap:10px; justify-content:space-between; }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.1rem }
+    .brand img{ width:36px; height:36px; border-radius:8px }
+    .tabs{ display:flex; gap:8px; margin:12px 0 }
+    .tab{ flex:1; text-align:center; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); color:#fff; cursor:pointer }
+    .tab.active{ background: var(--brand); color:#111; border-color: var(--brand); font-weight:700 }
+    .card{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px; box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+    label{ display:block; color:#fff; font-size:.95rem; margin:8px 0 4px; }
+    input, select{
+      width:100%; padding:10px 12px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color:#fff;
+    }
+    input:focus{
+      outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25);
+    }
+    table{ width:100%; border-collapse:collapse; margin-top:10px }
+    th, td{ padding:10px; border-bottom:1px dashed rgba(255,255,255,.15); }
+    th{ text-align:left; color:#cbd5e1; font-weight:700; font-size:.95rem }
+    td{ font-size:1rem }
+    .right{ text-align:right }
+    .muted{ color: var(--muted) }
+    .grand{ font-weight:900; font-size:1.2rem }
+    .btn{ padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color:#fff; cursor:pointer; font-weight:600; }
+    .btn.primary{ background: var(--brand); color:#0b1220; border-color: var(--brand) }
+    .btn.ghost{ background:transparent; border:1px dashed rgba(255,255,255,.4) }
+    .rowtools{ display:flex; gap:8px; flex-wrap:wrap }
 
-/* page background */
-body{
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  margin:0;
-  background: radial-gradient(1100px 700px at 15% -10%, var(--bg2) 0%, var(--bg1) 55%, #070b14 100%);
-  color:var(--ink);
-}
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
+    .hidden{ display:none }
+    .list .item{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:10px; margin:8px 0; cursor:pointer }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.5); color:#fff; font-size:.8rem }
+    .tiny{ font-size:.85rem; color:#cbd5e1 }
 
-/* dialog (settings) must be dark, not white */
-dialog{
-  border:none; border-radius:14px; background:#0f172a; color:#fff; padding:16px; width:min(860px,92vw);
-}
-dialog::backdrop{ background:rgba(0,0,0,.55) }
-dialog input, dialog textarea{
-  width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.08); color:#fff;
-}
-dialog input:focus, dialog textarea:focus{
-  outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25);
-}
+    /* Qty (+/-) controls */
     .qty{ display:flex; align-items:center; gap:6px }
-.qty input{ flex:1 }
-.qty button{
-  width:36px; height:36px; border-radius:10px; cursor:pointer;
-  border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; font-size:18px; line-height:1;
-}
-.qty button:active{ transform: translateY(1px); }
+    .qty input{ flex:1 }
+    .qty button{
+      width:36px; height:36px; border-radius:10px; cursor:pointer;
+      border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; font-size:18px; line-height:1;
+    }
+    .qty button:active{ transform: translateY(1px); }
+
+    /* Dialog (Settings) must be dark */
+    dialog{
+      border:none; border-radius:14px; background:#0f172a; color:#fff; padding:16px; width:min(860px,92vw);
+    }
+    dialog::backdrop{ background:rgba(0,0,0,.55) }
+    dialog input{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.08); color:#fff;
+    }
+    dialog input:focus{
+      outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25);
+    }
+
+    /* Print / Export PDF */
     @media print{
-  body{ background:#fff; color:#000 }
-  .tabs, .rowtools, .top, dialog, .hidden, .btn { display:none !important; }
-  .card{ box-shadow:none; border:none; }
-  table{ width:100%; border-collapse:collapse }
-  th, td{ border:1px solid #000 !important; color:#000 !important; }
-  .grand{ font-weight:800 }
-}
+      body{ background:#fff; color:#000 }
+      .tabs, .rowtools, .top, dialog, .hidden, .btn { display:none !important; }
+      .card{ box-shadow:none; border:none; }
+      table{ width:100%; border-collapse:collapse }
+      th, td{ border:1px solid #000 !important; color:#000 !important; }
+      .grand{ font-weight:800 }
+    }
   </style>
 </head>
 <body>
@@ -97,6 +133,7 @@ dialog input:focus, dialog textarea:focus{
       <button id="saveBtn" class="btn primary">💾 Save Entry</button>
       <button id="clearBtn" class="btn">🧹 Clear</button>
       <button id="exportBtn" class="btn">⬇️ Export CSV</button>
+      <button id="pdfBtn" class="btn">🖨️ Export as PDF</button>
     </div>
   </div>
 
@@ -106,7 +143,6 @@ dialog input:focus, dialog textarea:focus{
       <button id="toggleSelect" class="btn">☑️ Select</button>
       <button id="deleteSelected" class="btn">🗑 Delete selected</button>
       <button id="exportAllBtn" class="btn">⬇️ Export My Records (CSV)</button>
-      <button id="pdfBtn" class="btn">🖨️ Export as PDF</button>
     </div>
     <div id="savedList" class="list" style="margin-top:8px"></div>
   </div>
@@ -204,20 +240,17 @@ function recompute(){
 function clearAll(){
   // Reset all quantity inputs
   document.querySelectorAll('#rows .row input').forEach(inp => inp.value = '');
-
-  // Reset date (set to today again)
+  // Reset date (set to today)
   const dateEl = document.getElementById('date'); 
   if (dateEl) dateEl.valueAsDate = new Date();
-
   // Reset note
   const noteEl = document.getElementById('note'); 
   if (noteEl) noteEl.value = '';
-
-  // Recompute to force all line totals + GRAND TOTAL to £0.00
+  // Recompute to force all line totals + GRAND to £0.00
   recompute();
 }
 
-// ---- Save / Load / Export ----
+// ---- Save / Export ----
 function collectItems(){
   const items = [];
   document.querySelectorAll('#rows .row').forEach(row => {
@@ -239,6 +272,54 @@ function saveEntry(){
   alert('Saved ✓');
   refreshSavedList();
 }
+
+function exportCSV(){
+  const date = document.getElementById('date').value || new Date().toISOString().slice(0,10);
+  const rows = [['Date', date], ['Note', document.getElementById('note').value || ''], [], ['Denomination','Quantity','Total (£)']];
+  let grand = 0;
+  document.querySelectorAll('#rows .row').forEach(row => {
+    const denom = parseFloat(row.dataset.denom);
+    const qty = parseInt(row.querySelector('input').value || '0', 10);
+    const tot = denom * qty;
+    grand += tot;
+    rows.push([denom.toFixed(2), qty, tot.toFixed(2)]);
+  });
+  rows.push([]); rows.push(['GRAND TOTAL','',grand.toFixed(2)]);
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cash-counter-${date}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function exportAllCSV(){
+  const rows = [['Date','Note','Total','Items(JSON)']];
+  getSavedKeys().forEach(k => {
+    const p = JSON.parse(localStorage.getItem(k) || '{}');
+    rows.push([p.date||'', (p.note||'').replace(/\n/g,' '), (p.total||0).toFixed(2), JSON.stringify(p.items||[])]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cash-counter-records.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---- Export as PDF (print view) ----
+function exportPDF(){
+  recompute();
+  const d = (document.getElementById('date').value || new Date().toISOString().slice(0,10));
+  const prev = document.title;
+  document.title = `Cash Counter - ${d}`;
+  window.print();
+  document.title = prev;
+}
+
+// ---- Records: select & delete ----
+let selectMode = false;
+const selectedIds = new Set();
 
 function refreshSavedList(){
   const list = document.getElementById('savedList');
@@ -277,55 +358,6 @@ function refreshSavedList(){
     });
   }
 }
-
-function exportCSV(){
-  const date = document.getElementById('date').value || new Date().toISOString().slice(0,10);
-  const rows = [['Date', date], ['Note', document.getElementById('note').value || ''], [], ['Denomination','Quantity','Total (£)']];
-  let grand = 0;
-  document.querySelectorAll('#rows .row').forEach(row => {
-    const denom = parseFloat(row.dataset.denom);
-    const qty = parseInt(row.querySelector('input').value || '0', 10);
-    const tot = denom * qty;
-    grand += tot;
-    rows.push([denom.toFixed(2), qty, tot.toFixed(2)]);
-  });
-  rows.push([]); rows.push(['GRAND TOTAL','',grand.toFixed(2)]);
-  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `cash-counter-${date}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-}
-
-function exportAllCSV(){
-  const rows = [['Date','Note','Total','Items(JSON)']];
-  getSavedKeys().forEach(k => {
-    const p = JSON.parse(localStorage.getItem(k) || '{}');
-    rows.push([p.date||'', (p.note||'').replace(/\n/g,' '), (p.total||0).toFixed(2), JSON.stringify(p.items||[])]);
-  });
-  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'cash-counter-records.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-}
-function exportPDF(){
-  // Ensure totals are up-to-date
-  recompute();
-  // Optionally set a document title with the date for nicer file name
-  const d = (document.getElementById('date').value || new Date().toISOString().slice(0,10));
-  const prev = document.title;
-  document.title = `Cash Counter - ${d}`;
-  window.print();
-  document.title = prev;
-}
-document.getElementById('pdfBtn').addEventListener('click', exportPDF);
-
-// ---- Records: select & delete ----
-let selectMode = false;
-const selectedIds = new Set();
 
 document.getElementById('toggleSelect').addEventListener('click', () => {
   selectMode = !selectMode;
@@ -382,6 +414,7 @@ function init(){
   document.getElementById('clearBtn').addEventListener('click', clearAll);
   document.getElementById('exportBtn').addEventListener('click', exportCSV);
   document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
+  document.getElementById('pdfBtn').addEventListener('click', exportPDF);
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -393,4 +426,3 @@ init();
 </script>
 </body>
 </html>
-
