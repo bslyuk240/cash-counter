@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cash Counter (£)</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root { --ink:#e5e7eb; --muted:#94a3b8; --brand:#0ea5e9; --bg1:#0b1220; --bg2:#0e1526; --card:#0f172a; }
+    *{ box-sizing:border-box }
+    body{ font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; margin:0; background: radial-gradient(1100px 700px at 15% -10%, var(--bg2) 0%, var(--bg1) 55%, #070b14 100%); color:var(--ink); }
+    .wrap{ max-width:900px; margin:18px auto; padding:0 14px 20px; }
+    .top{ display:flex; align-items:center; gap:10px; justify-content:space-between; }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.1rem }
+    .brand img{ width:36px; height:36px; border-radius:8px }
+    .tabs{ display:flex; gap:8px; margin:12px 0 }
+    .tab{ flex:1; text-align:center; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); color:#fff; cursor:pointer }
+    .tab.active{ background: var(--brand); color:#111; border-color: var(--brand); font-weight:700 }
+    .card{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px; box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+    label{ display:block; color:#fff; font-size:.95rem; margin:8px 0 4px; }
+    input, select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color:#fff; }
+    input:focus{ outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
+    table{ width:100%; border-collapse:collapse; margin-top:10px }
+    th, td{ padding:10px; border-bottom:1px dashed rgba(255,255,255,.15); }
+    th{ text-align:left; color:#cbd5e1; font-weight:700; font-size:.95rem }
+    td{ font-size:1rem }
+    .right{ text-align:right }
+    .muted{ color: var(--muted) }
+    .grand{ font-weight:900; font-size:1.2rem }
+    .btn{ padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color:#fff; cursor:pointer; font-weight:600; }
+    .btn.primary{ background: var(--brand); color:#0b1220; border-color: var(--brand) }
+    .btn.ghost{ background:transparent; border:1px dashed rgba(255,255,255,.4) }
+    .rowtools{ display:flex; gap:8px; flex-wrap:wrap }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
+    .hidden{ display:none }
+    .list .item{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:10px; margin:8px 0; cursor:pointer }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.5); color:#fff; font-size:.8rem }
+    .tiny{ font-size:.85rem; color:#cbd5e1 }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <img src="./icons/icon-192.png" alt="Cash Counter icon">
+      <div>Cash Counter (£)</div>
+    </div>
+    <div class="rowtools">
+      <button id="settingsBtn" class="btn ghost">⚙️</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div id="tabDaily" class="tab active">Daily Entry</div>
+    <div id="tabRecords" class="tab">My Records</div>
+  </div>
+
+  <!-- Daily Entry -->
+  <div id="viewDaily" class="card">
+    <div class="grid2">
+      <div>
+        <label for="date">Date</label>
+        <input type="date" id="date">
+      </div>
+      <div>
+        <label for="note">Reference / Note (optional)</label>
+        <input type="text" id="note" placeholder="e.g., Morning count, Till A, Auditor">
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Denomination</th><th>Qty</th><th class="right">Total (£)</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+      <tfoot>
+        <tr><td class="grand">GRAND TOTAL</td><td></td><td class="right grand" id="grand">£0.00</td></tr>
+      </tfoot>
+    </table>
+
+    <div class="rowtools" style="margin-top:10px">
+      <button id="saveBtn" class="btn primary">💾 Save Entry</button>
+      <button id="clearBtn" class="btn">🧹 Clear</button>
+      <button id="exportBtn" class="btn">⬇️ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Records -->
+  <div id="viewRecords" class="card hidden">
+    <div class="rowtools">
+      <button id="toggleSelect" class="btn">☑️ Select</button>
+      <button id="deleteSelected" class="btn">🗑 Delete selected</button>
+      <button id="exportAllBtn" class="btn">⬇️ Export My Records (CSV)</button>
+    </div>
+    <div id="savedList" class="list" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- Settings dialog -->
+<dialog id="settingsDlg">
+  <form method="dialog">
+    <h3 style="margin:0 0 10px;">Settings</h3>
+    <label>Denominations (comma-separated, £)
+      <input id="denomsInput" type="text" placeholder="50, 20, 10, 5, 2, 1, 0.50, 0.20, 0.10, 0.05, 0.02, 0.01">
+    </label>
+    <div style="text-align:right; margin-top:10px;">
+      <button value="cancel" class="btn">Cancel</button>
+      <button id="saveSettingsBtn" value="default" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+// ---- State & Config ----
+const DEFAULT_DENOMS = [50,20,10,5,2,1,0.50,0.20,0.10,0.05,0.02,0.01];
+const keyCfg = 'cc:cfg';
+const keyPrefix = 'cc:entry:';
+
+function getCfg(){
+  const j = JSON.parse(localStorage.getItem(keyCfg) || '{}');
+  return { denoms: Array.isArray(j.denoms) && j.denoms.length ? j.denoms : DEFAULT_DENOMS };
+}
+function setCfg(o){ localStorage.setItem(keyCfg, JSON.stringify(o)); }
+
+function entryKey(id){ return keyPrefix + id; }
+function getSavedKeys(){
+  return Object.keys(localStorage).filter(k => k.startsWith(keyPrefix)).sort().reverse();
+}
+
+// ---- UI Build ----
+function buildRows(){
+  const { denoms } = getCfg();
+  const body = document.getElementById('rows');
+  body.innerHTML = '';
+  denoms.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.className = 'row';
+    tr.dataset.denom = d;
+    tr.innerHTML = `
+      <td>£${Number(d).toFixed(2)}</td>
+      <td><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td>
+      <td class="right total">£0.00</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  // Wire recompute
+  document.querySelectorAll('#rows .row input').forEach(inp => {
+    inp.addEventListener('input', recompute);
+    inp.addEventListener('change', recompute);
+  });
+}
+
+function recompute(){
+  let grand = 0;
+  document.querySelectorAll('#rows .row').forEach(row => {
+    const denom = parseFloat(row.dataset.denom);
+    const qty = parseInt(row.querySelector('input').value || '0', 10);
+    const tot = denom * qty;
+    row.querySelector('.total').textContent = '£' + tot.toFixed(2);
+    grand += tot;
+  });
+  document.getElementById('grand').textContent = '£' + grand.toFixed(2);
+}
+
+function clearAll(){
+  // reset inputs
+  document.querySelectorAll('#rows .row input').forEach(inp => inp.value = '');
+  // reset note and date (keep today's date)
+  const dateEl = document.getElementById('date');
+  if (dateEl) dateEl.valueAsDate = new Date();
+  const noteEl = document.getElementById('note');
+  if (noteEl) noteEl.value = '';
+  // recompute so line totals show £0.00 and grand £0.00
+  recompute();
+}
+
+// ---- Save / Load / Export ----
+function collectItems(){
+  const items = [];
+  document.querySelectorAll('#rows .row').forEach(row => {
+    const denom = parseFloat(row.dataset.denom);
+    const qty = parseInt(row.querySelector('input').value || '0', 10);
+    items.push({ denom, qty, total: denom * qty });
+  });
+  return items;
+}
+
+function saveEntry(){
+  const date = document.getElementById('date').value || new Date().toISOString().slice(0,10);
+  const note = document.getElementById('note').value || '';
+  const items = collectItems();
+  const total = items.reduce((s,i) => s + i.total, 0);
+  const payload = { date, note, items, total };
+  const id = new Date().toISOString();
+  localStorage.setItem(entryKey(id), JSON.stringify(payload));
+  alert('Saved ✓');
+  refreshSavedList();
+}
+
+function refreshSavedList(){
+  const list = document.getElementById('savedList');
+  list.innerHTML = '';
+  const keys = getSavedKeys();
+  if (!keys.length){
+    list.innerHTML = '<div class="tiny">No saved entries yet.</div>';
+    return;
+  }
+  keys.forEach(k => {
+    const p = JSON.parse(localStorage.getItem(k) || '{}');
+    const div = document.createElement('div');
+    div.className = 'item';
+    const checkbox = selectMode ? `<input type="checkbox" class="sel" data-id="${k}" style="margin-right:8px;">` : '';
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center;">
+          ${checkbox}
+          <div>
+            <strong>${p.date || '(no date)'}</strong>
+            <div class="tiny">${(p.note || '').replace(/\n/g,' ')}</div>
+          </div>
+        </div>
+        <div class="pill">£${(p.total||0).toFixed(2)}</div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  if (selectMode){
+    list.querySelectorAll('input.sel').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const id = e.currentTarget.dataset.id;
+        if (e.currentTarget.checked) selectedIds.add(id); else selectedIds.delete(id);
+      });
+    });
+  }
+}
+
+function exportCSV(){
+  const date = document.getElementById('date').value || new Date().toISOString().slice(0,10);
+  const rows = [['Date', date], ['Note', document.getElementById('note').value || ''], [], ['Denomination','Quantity','Total (£)']];
+  let grand = 0;
+  document.querySelectorAll('#rows .row').forEach(row => {
+    const denom = parseFloat(row.dataset.denom);
+    const qty = parseInt(row.querySelector('input').value || '0', 10);
+    const tot = denom * qty;
+    grand += tot;
+    rows.push([denom.toFixed(2), qty, tot.toFixed(2)]);
+  });
+  rows.push([]); rows.push(['GRAND TOTAL','',grand.toFixed(2)]);
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cash-counter-${date}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function exportAllCSV(){
+  const rows = [['Date','Note','Total','Items(JSON)']];
+  getSavedKeys().forEach(k => {
+    const p = JSON.parse(localStorage.getItem(k) || '{}');
+    rows.push([p.date||'', (p.note||'').replace(/\n/g,' '), (p.total||0).toFixed(2), JSON.stringify(p.items||[])]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cash-counter-records.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---- Records: select & delete ----
+let selectMode = false;
+const selectedIds = new Set();
+
+document.getElementById('toggleSelect').addEventListener('click', () => {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  document.getElementById('toggleSelect').textContent = selectMode ? 'Done selecting' : '☑️ Select';
+  refreshSavedList();
+});
+
+document.getElementById('deleteSelected').addEventListener('click', () => {
+  if (!selectedIds.size) { alert('No entries selected.'); return; }
+  if (!confirm(`Delete ${selectedIds.size} selected entr${selectedIds.size>1?'ies':'y'}? This cannot be undone.`)) return;
+  selectedIds.forEach(id => localStorage.removeItem(id));
+  selectedIds.clear();
+  selectMode = false;
+  document.getElementById('toggleSelect').textContent = '☑️ Select';
+  refreshSavedList();
+});
+
+// ---- Settings ----
+const settingsDlg = document.getElementById('settingsDlg');
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  const { denoms } = getCfg();
+  document.getElementById('denomsInput').value = denoms.join(', ');
+  settingsDlg.showModal();
+});
+document.getElementById('saveSettingsBtn').addEventListener('click', (e) => {
+  e.preventDefault();
+  const denoms = (document.getElementById('denomsInput').value || '')
+    .split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n > 0);
+  setCfg({ denoms: denoms.length ? denoms : DEFAULT_DENOMS });
+  settingsDlg.close();
+  buildRows(); recompute();
+});
+
+// ---- Tabs ----
+function showTab(which){
+  document.getElementById('tabDaily').classList.toggle('active', which==='daily');
+  document.getElementById('tabRecords').classList.toggle('active', which==='records');
+  document.getElementById('viewDaily').classList.toggle('hidden', which!=='daily');
+  document.getElementById('viewRecords').classList.toggle('hidden', which!=='records');
+  if (which === 'records') refreshSavedList();
+}
+document.getElementById('tabDaily').addEventListener('click', () => showTab('daily'));
+document.getElementById('tabRecords').addEventListener('click', () => showTab('records'));
+
+// ---- Init ----
+function init(){
+  document.getElementById('date').valueAsDate = new Date();
+  buildRows();
+  recompute();
+  refreshSavedList();
+
+  document.getElementById('saveBtn').addEventListener('click', saveEntry);
+  document.getElementById('clearBtn').addEventListener('click', clearAll);
+  document.getElementById('exportBtn').addEventListener('click', exportCSV);
+  document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js');
+    });
+  }
+}
+init();
+</script>
+</body>
+</html>
