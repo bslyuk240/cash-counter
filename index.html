@@ -16,11 +16,14 @@
       --card:#0f172a;          /* card dark */
     }
     *{ box-sizing:border-box }
+    html{ background:#070b14; }              /* cover overscroll area */
     body{
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       margin:0;
-      background: radial-gradient(1100px 700px at 15% -10%, var(--bg2) 0%, var(--bg1) 55%, #070b14 100%);
       color:var(--ink);
+      min-height:100svh;
+      overscroll-behavior-y: contain;        /* reduce bounce on supported browsers */
+      background: radial-gradient(1100px 700px at 15% -10%, var(--bg2) 0%, var(--bg1) 55%, #070b14 100%);
     }
     .wrap{ max-width:900px; margin:18px auto; padding:0 14px 20px; }
     .top{ display:flex; align-items:center; gap:10px; justify-content:space-between; }
@@ -35,9 +38,7 @@
       width:100%; padding:10px 12px; border-radius:10px;
       border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color:#fff;
     }
-    input:focus{
-      outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25);
-    }
+    input:focus{ outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
     table{ width:100%; border-collapse:collapse; margin-top:10px }
     th, td{ padding:10px; border-bottom:1px dashed rgba(255,255,255,.15); }
     th{ text-align:left; color:#cbd5e1; font-weight:700; font-size:.95rem }
@@ -49,10 +50,16 @@
     .btn.primary{ background: var(--brand); color:#0b1220; border-color: var(--brand) }
     .btn.ghost{ background:transparent; border:1px dashed rgba(255,255,255,.4) }
     .rowtools{ display:flex; gap:8px; flex-wrap:wrap }
-
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
+    /* On phones: stack Date ABOVE Note */
+    @media (max-width:560px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
     .hidden{ display:none }
-    .list .item{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:10px; margin:8px 0; cursor:pointer }
+    .list .item{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:10px; margin:8px 0; }
+    .itemHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .itemBtns{ display:flex; gap:6px; align-items:center; }
     .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.5); color:#fff; font-size:.8rem }
     .tiny{ font-size:.85rem; color:#cbd5e1 }
 
@@ -64,7 +71,6 @@
       font-size:18px; cursor:pointer;
     }
     .iconbtn:active{ transform: translateY(1px); }
-    .iconbtn[title]{ position:relative }
 
     /* Qty (+/-) controls */
     .qty{ display:flex; align-items:center; gap:6px }
@@ -75,7 +81,7 @@
     }
     .qty button:active{ transform: translateY(1px); }
 
-    /* Dialog (Settings) must be dark */
+    /* Dialogs (dark) */
     dialog{
       border:none; border-radius:14px; background:#0f172a; color:#fff; padding:16px; width:min(860px,92vw);
     }
@@ -84,18 +90,20 @@
       width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.2);
       background: rgba(255,255,255,.08); color:#fff;
     }
-    dialog input:focus{
-      outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25);
-    }
+    dialog input:focus{ outline:none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
+
+    /* Hidden print area for single-entry PDF */
+    #printArea{ display:none; background:#fff; color:#000; padding:16px; }
+    #printArea h2{ margin:0 0 6px; color:#000; }
+    #printArea table{ width:100%; border-collapse:collapse; margin-top:8px; }
+    #printArea th, #printArea td{ border:1px solid #000; padding:8px; color:#000; }
+    #printArea .grand{ font-weight:800; }
 
     /* Print / Export PDF */
     @media print{
       body{ background:#fff; color:#000 }
-      .tabs, .rowtools, .top, dialog, .hidden, .btn, .iconbar, .iconbtn { display:none !important; }
-      .card{ box-shadow:none; border:none; }
-      table{ width:100%; border-collapse:collapse }
-      th, td{ border:1px solid #000 !important; color:#000 !important; }
-      .grand{ font-weight:800 }
+      .tabs, .rowtools, .top, dialog, .hidden, .btn, .iconbar, .iconbtn, .card { display:none !important; }
+      #printArea{ display:block !important; }
     }
   </style>
 </head>
@@ -151,7 +159,7 @@
       <button id="toggleSelect" class="iconbtn" title="Select rows">☑️</button>
       <button id="deleteSelected" class="iconbtn" title="Delete selected">🗑️</button>
       <button id="exportAllBtn" class="iconbtn" title="Export CSV">⬇️</button>
-      <button id="pdfAllBtn" class="iconbtn" title="Export PDF">🖨️</button>
+      <button id="pdfAllBtn" class="iconbtn" title="Export PDF (selected entry)">🖨️</button>
     </div>
     <div id="savedList" class="list" style="margin-top:8px"></div>
   </div>
@@ -171,6 +179,21 @@
   </form>
 </dialog>
 
+<!-- Detail dialog -->
+<dialog id="detailDlg">
+  <form method="dialog">
+    <h3 style="margin:0 0 8px;">Entry details</h3>
+    <div id="detailBody" class="tiny"></div>
+    <div style="text-align:right; margin-top:10px;">
+      <button id="detailPdfBtn" class="btn">🖨️ PDF</button>
+      <button value="cancel" class="btn primary">Close</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Hidden print area for single-entry PDF -->
+<div id="printArea"></div>
+
 <script>
 // ---- State & Config ----
 const DEFAULT_DENOMS = [50,20,10,5,2,1,0.50,0.20,0.10,0.05,0.02,0.01];
@@ -184,9 +207,7 @@ function getCfg(){
 function setCfg(o){ localStorage.setItem(keyCfg, JSON.stringify(o)); }
 
 function entryKey(id){ return keyPrefix + id; }
-function getSavedKeys(){
-  return Object.keys(localStorage).filter(k => k.startsWith(keyPrefix)).sort().reverse();
-}
+function getSavedKeys(){ return Object.keys(localStorage).filter(k => k.startsWith(keyPrefix)).sort().reverse(); }
 
 // ---- UI Build ----
 function buildRows(){
@@ -247,19 +268,13 @@ function recompute(){
 }
 
 function clearAll(){
-  // Reset all quantity inputs
   document.querySelectorAll('#rows .row input').forEach(inp => inp.value = '');
-  // Reset date (set to today)
-  const dateEl = document.getElementById('date'); 
-  if (dateEl) dateEl.valueAsDate = new Date();
-  // Reset note
-  const noteEl = document.getElementById('note'); 
-  if (noteEl) noteEl.value = '';
-  // Recompute to force all line totals + GRAND to £0.00
+  const dateEl = document.getElementById('date'); if (dateEl) dateEl.valueAsDate = new Date();
+  const noteEl = document.getElementById('note'); if (noteEl) noteEl.value = '';
   recompute();
 }
 
-// ---- Save / Export ----
+// ---- Save ----
 function collectItems(){
   const items = [];
   document.querySelectorAll('#rows .row').forEach(row => {
@@ -282,9 +297,30 @@ function saveEntry(){
   refreshSavedList();
 }
 
-// ---- Records: select & delete ----
+// ---- Records (list, select, delete, view) ----
 let selectMode = false;
 const selectedIds = new Set();
+let lastViewed = null;  // store last viewed payload for PDF
+
+function renderDetail(p){
+  const el = document.getElementById('detailBody');
+  const rows = p.items.map(it => `<tr><td>£${it.denom.toFixed(2)}</td><td class="right">${it.qty}</td><td class="right">£${it.total.toFixed(2)}</td></tr>`).join('');
+  el.innerHTML = `
+    <div><strong>Date:</strong> ${p.date || ''}</div>
+    ${p.note ? `<div><strong>Note:</strong> ${String(p.note).replace(/</g,'&lt;')}</div>` : ''}
+    <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+      <thead><tr><th>Denomination</th><th class="right">Qty</th><th class="right">Total (£)</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td class="grand">GRAND TOTAL</td><td></td><td class="right grand">£${(p.total||0).toFixed(2)}</td></tr></tfoot>
+    </table>
+  `;
+}
+
+function openDetail(p){
+  lastViewed = p;
+  renderDetail(p);
+  document.getElementById('detailDlg').showModal();
+}
 
 function refreshSavedList(){
   const list = document.getElementById('savedList');
@@ -300,20 +336,24 @@ function refreshSavedList(){
     div.className = 'item';
     const checkbox = selectMode ? `<input type="checkbox" class="sel" data-id="${k}" style="margin-right:8px;">` : '';
     div.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center;">
+      <div class="itemHead">
+        <div style="display:flex; align-items:center; gap:8px;">
           ${checkbox}
           <div>
             <strong>${p.date || '(no date)'}</strong>
             <div class="tiny">${(p.note || '').replace(/\n/g,' ')}</div>
           </div>
         </div>
-        <div class="pill">£${(p.total||0).toFixed(2)}</div>
+        <div class="itemBtns">
+          <span class="pill">£${(p.total||0).toFixed(2)}</span>
+          ${!selectMode ? `<button class="btn" data-view="${k}" title="View details">👁</button>` : ''}
+        </div>
       </div>
     `;
     list.appendChild(div);
   });
 
+  // checkbox wiring
   if (selectMode){
     list.querySelectorAll('input.sel').forEach(cb => {
       cb.addEventListener('change', e => {
@@ -322,9 +362,18 @@ function refreshSavedList(){
       });
     });
   }
+
+  // view buttons
+  list.querySelectorAll('button[data-view]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const id = e.currentTarget.getAttribute('data-view');
+      const p = JSON.parse(localStorage.getItem(id) || '{}');
+      openDetail(p);
+    });
+  });
 }
 
-// ---- CSV (Records)
+// CSV (all records)
 function exportAllCSV(){
   const rows = [['Date','Note','Total','Items(JSON)']];
   getSavedKeys().forEach(k => {
@@ -339,24 +388,47 @@ function exportAllCSV(){
   document.body.appendChild(a); a.click(); a.remove();
 }
 
-// ---- Export PDF (Records)
-// We’ll reuse the page’s print CSS and just switch to the Records tab before printing
-function exportAllPDF(){
-  showTab('records');
-  // Give the DOM a tick to render before print
-  setTimeout(()=>{ 
-    const prev = document.title;
-    document.title = 'Cash Counter - Records';
-    window.print();
-    document.title = prev;
-  }, 50);
+// PDF of a single selected entry (or prompt)
+function exportSelectedPDF(){
+  // If exactly one selected, print that; otherwise, if a detail is open (lastViewed), print that; else prompt.
+  let p = null;
+  if (selectedIds.size === 1){
+    const id = Array.from(selectedIds)[0];
+    p = JSON.parse(localStorage.getItem(id) || '{}');
+  } else if (lastViewed) {
+    p = lastViewed;
+  }
+  if (!p){ alert('Select one entry or open an entry with 👁 View first.'); return; }
+
+  // Build print area
+  const pa = document.getElementById('printArea');
+  const rows = (p.items||[]).map(it => `<tr><td>£${it.denom.toFixed(2)}</td><td class="right">${it.qty}</td><td class="right">£${it.total.toFixed(2)}</td></tr>`).join('');
+  pa.innerHTML = `
+    <h2>Cash Counter — Entry</h2>
+    <div><strong>Date:</strong> ${p.date || ''}</div>
+    ${p.note ? `<div><strong>Note:</strong> ${String(p.note).replace(/</g,'&lt;')}</div>` : ''}
+    <table>
+      <thead><tr><th>Denomination</th><th class="right">Qty</th><th class="right">Total (£)</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td class="grand">GRAND TOTAL</td><td></td><td class="right grand">£${(p.total||0).toFixed(2)}</td></tr></tfoot>
+    </table>
+  `;
+  const prev = document.title;
+  document.title = `Cash Counter - ${p.date || 'entry'}`;
+  window.print();
+  document.title = prev;
 }
 
-// ---- Wiring: Records toolbar
+// Detail dialog PDF button = selected entry PDF too
+document.getElementById('detailPdfBtn').addEventListener('click', (e)=>{
+  e.preventDefault();
+  exportSelectedPDF();
+});
+
+// Records toolbar wiring
 document.getElementById('toggleSelect').addEventListener('click', () => {
   selectMode = !selectMode;
   selectedIds.clear();
-  document.getElementById('toggleSelect').title = selectMode ? 'Done selecting' : 'Select rows';
   refreshSavedList();
 });
 document.getElementById('deleteSelected').addEventListener('click', () => {
@@ -365,11 +437,10 @@ document.getElementById('deleteSelected').addEventListener('click', () => {
   selectedIds.forEach(id => localStorage.removeItem(id));
   selectedIds.clear();
   selectMode = false;
-  document.getElementById('toggleSelect').title = 'Select rows';
   refreshSavedList();
 });
 document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
-document.getElementById('pdfAllBtn').addEventListener('click', exportAllPDF);
+document.getElementById('pdfAllBtn').addEventListener('click', exportSelectedPDF);
 
 // ---- Settings ----
 const settingsDlg = document.getElementById('settingsDlg');
