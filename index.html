@@ -56,6 +56,16 @@
     .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.5); color:#fff; font-size:.8rem }
     .tiny{ font-size:.85rem; color:#cbd5e1 }
 
+    /* Icon-only toolbar buttons in Records */
+    .iconbar{ display:flex; gap:8px; flex-wrap:wrap }
+    .iconbtn{
+      width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center;
+      border-radius:10px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff;
+      font-size:18px; cursor:pointer;
+    }
+    .iconbtn:active{ transform: translateY(1px); }
+    .iconbtn[title]{ position:relative }
+
     /* Qty (+/-) controls */
     .qty{ display:flex; align-items:center; gap:6px }
     .qty input{ flex:1 }
@@ -81,7 +91,7 @@
     /* Print / Export PDF */
     @media print{
       body{ background:#fff; color:#000 }
-      .tabs, .rowtools, .top, dialog, .hidden, .btn { display:none !important; }
+      .tabs, .rowtools, .top, dialog, .hidden, .btn, .iconbar, .iconbtn { display:none !important; }
       .card{ box-shadow:none; border:none; }
       table{ width:100%; border-collapse:collapse }
       th, td{ border:1px solid #000 !important; color:#000 !important; }
@@ -106,7 +116,7 @@
     <div id="tabRecords" class="tab">My Records</div>
   </div>
 
-  <!-- Daily Entry -->
+  <!-- Daily Entry (ONLY Save + Clear here) -->
   <div id="viewDaily" class="card">
     <div class="grid2">
       <div>
@@ -130,19 +140,18 @@
     </table>
 
     <div class="rowtools" style="margin-top:10px">
-      <button id="saveBtn" class="btn primary">💾 Save Entry</button>
-      <button id="clearBtn" class="btn">🧹 Clear</button>
-      <button id="exportBtn" class="btn">⬇️ Export CSV</button>
-      <button id="pdfBtn" class="btn">🖨️ Export as PDF</button>
+      <button id="saveBtn" class="btn primary" title="Save Entry">💾 Save</button>
+      <button id="clearBtn" class="btn" title="Clear all">🧹 Clear</button>
     </div>
   </div>
 
-  <!-- Records -->
+  <!-- Records (icon-only toolbar) -->
   <div id="viewRecords" class="card hidden">
-    <div class="rowtools">
-      <button id="toggleSelect" class="btn">☑️ Select</button>
-      <button id="deleteSelected" class="btn">🗑 Delete selected</button>
-      <button id="exportAllBtn" class="btn">⬇️ Export My Records (CSV)</button>
+    <div class="iconbar">
+      <button id="toggleSelect" class="iconbtn" title="Select rows">☑️</button>
+      <button id="deleteSelected" class="iconbtn" title="Delete selected">🗑️</button>
+      <button id="exportAllBtn" class="iconbtn" title="Export CSV">⬇️</button>
+      <button id="pdfAllBtn" class="iconbtn" title="Export PDF">🖨️</button>
     </div>
     <div id="savedList" class="list" style="margin-top:8px"></div>
   </div>
@@ -273,50 +282,6 @@ function saveEntry(){
   refreshSavedList();
 }
 
-function exportCSV(){
-  const date = document.getElementById('date').value || new Date().toISOString().slice(0,10);
-  const rows = [['Date', date], ['Note', document.getElementById('note').value || ''], [], ['Denomination','Quantity','Total (£)']];
-  let grand = 0;
-  document.querySelectorAll('#rows .row').forEach(row => {
-    const denom = parseFloat(row.dataset.denom);
-    const qty = parseInt(row.querySelector('input').value || '0', 10);
-    const tot = denom * qty;
-    grand += tot;
-    rows.push([denom.toFixed(2), qty, tot.toFixed(2)]);
-  });
-  rows.push([]); rows.push(['GRAND TOTAL','',grand.toFixed(2)]);
-  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `cash-counter-${date}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-}
-
-function exportAllCSV(){
-  const rows = [['Date','Note','Total','Items(JSON)']];
-  getSavedKeys().forEach(k => {
-    const p = JSON.parse(localStorage.getItem(k) || '{}');
-    rows.push([p.date||'', (p.note||'').replace(/\n/g,' '), (p.total||0).toFixed(2), JSON.stringify(p.items||[])]);
-  });
-  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'cash-counter-records.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-}
-
-// ---- Export as PDF (print view) ----
-function exportPDF(){
-  recompute();
-  const d = (document.getElementById('date').value || new Date().toISOString().slice(0,10));
-  const prev = document.title;
-  document.title = `Cash Counter - ${d}`;
-  window.print();
-  document.title = prev;
-}
-
 // ---- Records: select & delete ----
 let selectMode = false;
 const selectedIds = new Set();
@@ -359,22 +324,52 @@ function refreshSavedList(){
   }
 }
 
+// ---- CSV (Records)
+function exportAllCSV(){
+  const rows = [['Date','Note','Total','Items(JSON)']];
+  getSavedKeys().forEach(k => {
+    const p = JSON.parse(localStorage.getItem(k) || '{}');
+    rows.push([p.date||'', (p.note||'').replace(/\n/g,' '), (p.total||0).toFixed(2), JSON.stringify(p.items||[])]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cash-counter-records.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---- Export PDF (Records)
+// We’ll reuse the page’s print CSS and just switch to the Records tab before printing
+function exportAllPDF(){
+  showTab('records');
+  // Give the DOM a tick to render before print
+  setTimeout(()=>{ 
+    const prev = document.title;
+    document.title = 'Cash Counter - Records';
+    window.print();
+    document.title = prev;
+  }, 50);
+}
+
+// ---- Wiring: Records toolbar
 document.getElementById('toggleSelect').addEventListener('click', () => {
   selectMode = !selectMode;
   selectedIds.clear();
-  document.getElementById('toggleSelect').textContent = selectMode ? 'Done selecting' : '☑️ Select';
+  document.getElementById('toggleSelect').title = selectMode ? 'Done selecting' : 'Select rows';
   refreshSavedList();
 });
-
 document.getElementById('deleteSelected').addEventListener('click', () => {
   if (!selectedIds.size) { alert('No entries selected.'); return; }
   if (!confirm(`Delete ${selectedIds.size} selected entr${selectedIds.size>1?'ies':'y'}? This cannot be undone.`)) return;
   selectedIds.forEach(id => localStorage.removeItem(id));
   selectedIds.clear();
   selectMode = false;
-  document.getElementById('toggleSelect').textContent = '☑️ Select';
+  document.getElementById('toggleSelect').title = 'Select rows';
   refreshSavedList();
 });
+document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
+document.getElementById('pdfAllBtn').addEventListener('click', exportAllPDF);
 
 // ---- Settings ----
 const settingsDlg = document.getElementById('settingsDlg');
@@ -412,9 +407,6 @@ function init(){
 
   document.getElementById('saveBtn').addEventListener('click', saveEntry);
   document.getElementById('clearBtn').addEventListener('click', clearAll);
-  document.getElementById('exportBtn').addEventListener('click', exportCSV);
-  document.getElementById('exportAllBtn').addEventListener('click', exportAllCSV);
-  document.getElementById('pdfBtn').addEventListener('click', exportPDF);
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
